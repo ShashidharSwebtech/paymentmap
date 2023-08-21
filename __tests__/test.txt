@@ -1,0 +1,159 @@
+/**
+ * @format
+ */
+
+import 'react-native';
+import React from 'react';
+import App from '../App';
+import { PERMISSIONS, checkMultiple, request } from 'react-native-permissions';
+
+// Note: import explicitly to use the types shiped with jest.
+import {it} from '@jest/globals';
+
+// Note: test renderer must be required after react-native.
+import renderer from 'react-test-renderer';
+import { render } from '@testing-library/react-native';
+import { Platform } from 'react-native';
+const {View:MockView}=require("react-native")
+
+jest.mock("react-native-maps",()=>({
+  MapView:(props:any)=><MockView {...props}></MockView>,
+  Marker:(props:any)=><MockView {...props}></MockView>
+}))
+
+jest.mock("@react-navigation/native", () => {
+  const actualNavigation = jest.requireActual('@react-navigation/native');
+  const { View: MockView } = require("react-native")
+  return {
+    ...actualNavigation,
+    NavigationContainer: () => <MockView />
+  }
+});
+
+jest.mock("@react-navigation/stack",()=>({
+  createStackNavigator:()=>({
+    Navigator: () => <MockView />,
+    Screen: () => (props: any) => <></>
+  })
+}))
+jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+  OS:'ios'
+}))
+jest.mock("@react-navigation/bottom-tabs", () => {
+  
+  return {
+      createBottomTabNavigator: () => ({
+          Navigator: () => <MockView />,
+          Screen: () => (props: any) => <></>
+      })
+  };
+})
+
+
+
+
+
+jest.mock("react-native-razorpay",()=>({
+  RazorpayCheckout:{
+    open:jest.fn()
+  }
+}))
+jest.mock("react-native-responsive-screen", () => ({
+  heightPercentageToDP: jest.fn(),
+  widthPercentageToDP: jest.fn()
+}))
+
+
+jest.mock("react-native-vector-icons/FontAwesome", () => () => <></>)
+
+ jest.mock("react-native-permissions", () => ({
+  PERMISSIONS: {IOS: {
+    LOCATION_WHEN_IN_USE:"ios.permission.LOCATION_WHEN_IN_USE"
+  }, ANDROID: { 
+    ACCESS_FINE_LOCATION:"android.permission.ACCESS_FINE_LOCATION"
+  }
+},
+  request:jest.fn()
+  .mockImplementationOnce((...args)=>Promise.resolve("granted"))
+}))
+
+describe("App component",()=>{
+
+  it('renders correctly', () => {
+
+    jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+      OS:"ios"
+    }))
+    Platform.OS="ios"
+
+    render(<App />);
+  });
+  it('renders correctly ios denied', () => {
+    jest.mock("react-native-permissions", () => ({
+      PERMISSIONS: {IOS: {
+        LOCATION_WHEN_IN_USE:"ios.permission.LOCATION_WHEN_IN_USE"
+      }, ANDROID: { 
+        ACCESS_FINE_LOCATION:"android.permission.ACCESS_FINE_LOCATION"
+      }
+    },
+      request:jest.fn()
+      .mockImplementationOnce((...args)=>Promise.resolve("denied"))
+    }))
+    jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+      OS:"ios"
+    }))
+    Platform.OS="ios"
+
+    render(<App />);
+  });
+  it('renders correctly ios catch', () => {
+    jest.mock("react-native-permissions", () => ({
+      PERMISSIONS: {IOS: {
+        LOCATION_WHEN_IN_USE:"ios.permission.LOCATION_WHEN_IN_USE"
+      }, ANDROID: { 
+        ACCESS_FINE_LOCATION:"android.permission.ACCESS_FINE_LOCATION"
+      }
+    },
+      request:jest.fn()
+      .mockImplementationOnce((...args)=>Promise.reject("error"))
+    }))
+    jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+      OS:"ios"
+    }))
+    Platform.OS="ios"
+
+    render(<App />);
+  });
+  it("granted",()=>{
+    jest.mock("react-native-permissions", () => ({
+      PERMISSIONS: {IOS: {
+        LOCATION_WHEN_IN_USE:"ios.permission.LOCATION_WHEN_IN_USE"
+      }, ANDROID: { 
+        ACCESS_FINE_LOCATION:"android.permission.ACCESS_FINE_LOCATION"
+      }
+    },
+      request:jest.fn()
+      .mockImplementationOnce((...args)=>Promise.resolve("denied"))
+    }))
+    jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+      OS:"android"
+    }))
+      Platform.OS="android"
+      render(<App/>)
+  })
+
+
+
+
+  it("granted",()=>{
+
+    jest.mock("react-native/Libraries/Utilities/Platform",()=>({
+      OS:"android"
+    }))
+    
+    Platform.OS="android"
+
+    render(<App/>)
+})
+})
+
